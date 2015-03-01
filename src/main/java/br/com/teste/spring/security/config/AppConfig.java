@@ -1,5 +1,10 @@
 package br.com.teste.spring.security.config;
 
+import java.util.Properties;
+
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
+
 import org.springframework.aop.Advisor;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.interceptor.CustomizableTraceInterceptor;
@@ -12,7 +17,13 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -97,15 +108,48 @@ public class AppConfig extends WebMvcConfigurerAdapter {
 		return new PropertySourcesPlaceholderConfigurer();
 	}
 
-	@Bean(name = "dataSource")
-	public DriverManagerDataSource dataSource() {
-		DriverManagerDataSource driverManagerDataSource = new DriverManagerDataSource();
-		driverManagerDataSource.setDriverClassName("com.mysql.jdbc.Driver");
-		driverManagerDataSource.setUrl("jdbc:mysql://localhost:3306/test");
-		driverManagerDataSource.setUsername("med");
-		driverManagerDataSource.setPassword("med");
-		return driverManagerDataSource;
-	}
+	   @Bean
+	   public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+	      LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+	      em.setDataSource(dataSource());
+	      em.setPackagesToScan(new String[] { "br.com.teste.spring.security.common.domain" });
+	 
+	      JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+	      em.setJpaVendorAdapter(vendorAdapter);
+	      em.setJpaProperties(additionalProperties());
+	 
+	      return em;
+	   }
+	 
+	   @Bean
+	   public DataSource dataSource(){
+	      DriverManagerDataSource dataSource = new DriverManagerDataSource();
+	      dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+	      dataSource.setUrl("jdbc:mysql://localhost:3306/test");
+	      dataSource.setUsername( "med" );
+	      dataSource.setPassword( "med" );
+	      return dataSource;
+	   }
+	 
+	   @Bean
+	   public PlatformTransactionManager transactionManager(EntityManagerFactory emf){
+	      JpaTransactionManager transactionManager = new JpaTransactionManager();
+	      transactionManager.setEntityManagerFactory(emf);
+	 
+	      return transactionManager;
+	   }
+	 
+	   @Bean
+	   public PersistenceExceptionTranslationPostProcessor exceptionTranslation(){
+	      return new PersistenceExceptionTranslationPostProcessor();
+	   }
+	 
+	   Properties additionalProperties() {
+	      Properties properties = new Properties();
+	      properties.setProperty("hibernate.hbm2ddl.auto", "update");
+	      properties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
+	      return properties;
+	   }
     @Override
     public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
         configurer.enable();

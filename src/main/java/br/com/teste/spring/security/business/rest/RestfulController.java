@@ -1,6 +1,7 @@
 package br.com.teste.spring.security.business.rest;
 
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.teste.spring.security.business.manager.RestManager;
 import br.com.teste.spring.security.common.domain.Pet;
+import br.com.teste.spring.security.common.domain.User;
 import br.com.teste.spring.security.common.exception.CommonException;
 @RequestMapping("/rest/v1.0")
 @RestController
@@ -38,5 +40,11 @@ public class RestfulController {
     public Pet getPet(@PathVariable Integer idPet) throws CommonException {
     	
         return manager.getPet(idPet);
+    }
+    @RequestMapping(value = "/user", method = RequestMethod.GET, produces=MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<User> findAllUsers(@RequestParam(value = "username", required = false) String username){
+    	
+        return manager.findUsers(username);
     }
 }
